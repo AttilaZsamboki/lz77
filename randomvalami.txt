@@ -1,0 +1,17 @@
+In the valley the river sings a repeated refrain: the river runs and runs, the river runs and runs.
+Beneath the willow the children listened: the river runs and runs, the river runs and runs, the river runs and runs.
+They counted pebbles, they counted leaves, they counted heartbeats — the river runs and runs.
+The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.
+At noon the bell would ring. At noon the bell would ring. At noon the bell would ring.
+Echoes echo echoes: echo echo echo echo echo.
+Pattern A: ABABABABABABABABABAB. Pattern B: 12341234123412341234.
+LOREMLOREMLOREMLOREMLOREMLOREMLOREMLOREMLOREMLOREMLOREMLOREM.
+Small shift: the river runs and runs; beneath the willow the children listened.
+Overlap test: abcabcababcabcababcabcabcabcabcabcabc.
+The quick brown fox jumps over the lazy dog — then the fox sat down. The fox sat down and watched the river run and run and run.
+Repeat block:
+<<REPEAT>>
+In the valley the river sings a repeated refrain: the river runs and runs, the river runs and runs.
+In the valley the river sings a repeated refrain: the river runs and runs, the river runs and runs.
+<<END REPEAT>>
+End of file marker. End of file marker. End of file marker.
