@@ -50,7 +50,7 @@ int get_length(char *search[LENGTH]) {
 
 Match find_match(char *search[LENGTH], char ahead[50]) {
   int end = 0, subend = 0, subd = 0, d;
-  char match[50], submatch[50], c;
+  char c;
   int length = get_length(search);
   for (int j = 0; ahead[subend] != '\0' && search[j] != NULL; j++) {
 
@@ -59,24 +59,19 @@ Match find_match(char *search[LENGTH], char ahead[50]) {
     }
 
     if (ahead[subend] == *search[j]) {
-      submatch[subend] = *search[j];
       subend++;
     } 
 
-    if ((ahead[subend-1] != *search[j] || ahead[subend] == '\0' || search[j+1] == NULL) && (subend || !end) ) { 
+    if ((ahead[subend] != *search[j] || ahead[subend] == '\0' || search[j+1] == NULL) && (subend || !end) ) { 
       if (subend > end) {
         end = subend;
-        printf("LENGTH: %d, %d\n", length, subd);
         d = length - subd;
-        c = ahead[subend] == '\0' ? '?' : ahead[subend-1];
-        memcpy(match, submatch, 50);
+        c = ahead[subend] == '\0' ? '\0' : ahead[subend-1];
       }
-      memset(submatch, 0, 50);
       subend = 0;
       subd = 0;
     }
   }
-  /*printf("%s\n", match);*/
   struct Match match2 = {d, end, c};
   return match2;
 }
