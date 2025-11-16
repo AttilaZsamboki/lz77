@@ -10,9 +10,18 @@ typedef struct Match {
   char c;
 } Match;
 
-void add(char item, char *circular_buffer[LENGTH]);
-void remove_item(char *circular_buffer[LENGTH]);
-void print_buffer(char *circular_buffer[LENGTH]);
-struct Match find_match(char *circular_buffer[LENGTH], char input[50]);
+typedef struct Buffer {
+  int size, end, start;
+  unsigned char data[LENGTH];
+} Buffer;
+
+typedef struct Ahead {
+  long size;
+  unsigned char *buffer;
+} Ahead;
+
+void add(char item, Buffer *b);
+void print_buffer(Buffer *b);
+struct Match find_match(Buffer *b, Ahead *a);
 
 #endif

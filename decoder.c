@@ -17,10 +17,14 @@ char *read_file(const char *filename, size_t *out_size) {
   }
 
   fseek(f, 0, SEEK_END);
-  long size = ftell(f);
+  long file_size = ftell(f);
   rewind(f);
 
-  char *data = malloc(size * 10);
+  /* Allocate buffer: compressed files are typically smaller than decompressed,
+     so allocate a reasonable multiplier. For safety, cap at 100MB. */
+  size_t max_output =
+      (file_size < 1000000) ? (file_size * 100 + 4096) : 104857600;
+  unsigned char *data = malloc(max_output);
   if (!data) {
     perror("malloc");
     fclose(f);
@@ -29,7 +33,7 @@ char *read_file(const char *filename, size_t *out_size) {
   Token token;
   int end = 0;
   while (fread(&token, sizeof(token), 1, f) == 1) {
-    if (token.length == 0 && token.length == 0) {
+    if (token.length == 0 && token.distance == 0) {
       data[end] = token.next;
       end++;
     } else {
@@ -44,26 +48,31 @@ char *read_file(const char *filename, size_t *out_size) {
 
   if (out_size)
     *out_size = end;
-  data[end] = '\0';
   return data;
 }
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     printf("Usage:\n");
-    printf("  %s encode <input> <output>\n", argv[0]);
-    printf("  %s decode <input> <output>\n", argv[0]);
+    printf("  %s <input> <output>\n", argv[0]);
     return 1;
   }
 
   size_t size;
-  char *data = read_file(argv[1], &size);
+  unsigned char *data = (unsigned char *)read_file(argv[1], &size);
   if (!data)
     return 1;
-  FILE *f = fopen(argv[2], "w");
-  fprintf(f, "%s", data);
 
-  printf("\n");
+  FILE *f = fopen(argv[2], "wb");
+  if (!f) {
+    perror("Error opening output file");
+    free(data);
+    return 1;
+  }
+
+  fwrite(data, 1, size, f);
+  fclose(f);
+
   free(data);
   return 0;
 }

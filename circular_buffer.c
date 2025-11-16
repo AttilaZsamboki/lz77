@@ -1,72 +1,40 @@
 #include "circular_buffer.h"
+#include "debugmalloc.h"
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int end, start;
-
-void add(char item, char *circular_buffer[LENGTH]) {
-  char *p = malloc(sizeof(char));
-  *p = item;
-  circular_buffer[end] = p;
-
-  if (end == LENGTH - 1) {
-    end = 0;
+void add(char item, Buffer *b) {
+  b->data[b->end] = (unsigned char)item;
+  b->end = (b->end + 1) % LENGTH;
+  if (b->size == LENGTH) {
+    /* buffer full: overwrite oldest element */
+    b->start = (b->start + 1) % LENGTH;
   } else {
-    end++;
-  }
-
-  if (circular_buffer[end]) {
-    start = end;
+    b->size++;
   }
 }
 
-void remove_item(char *circular_buffer[LENGTH]) {
-  circular_buffer[start] = NULL;
-  if (start == LENGTH) {
-    start = 0;
-    return;
-  }
-  start++;
-}
-
-void print_buffer(char *circular_buffer[LENGTH]) {
-  for (int i = 0; i < LENGTH; i++) {
-    if (!circular_buffer[i]) {
-      printf("-");
-      continue;
-    }
-    printf("%c", *circular_buffer[i]);
-  }
-  printf("\n");
-}
-
-int get_length(char *search[LENGTH]) {
-  int i;
-  for (i = 0; i <= LENGTH && search[i] != NULL; i++);
-  return i;
-}
-
-Match find_match(char *search[LENGTH], char ahead[50]) {
+Match find_match(Buffer *b, Ahead *a) {
   int end = 0, subend = 0, subd = 0, d;
   char c;
-  int length = get_length(search);
-  for (int j = 0; ahead[subend] != '\0' && search[j] != NULL; j++) {
+  for (int j = 0; subend < a->size && j < b->size; j++) {
 
-    if (ahead[0] == *search[j] && !subd) {
+    if (a->buffer[0] == b->data[j] && !subd) {
       subd = j;
     }
 
-    if (ahead[subend] == *search[j]) {
+    if (a->buffer[subend] == b->data[j]) {
       subend++;
-    } 
+    }
 
-    if ((ahead[subend] != *search[j] || ahead[subend] == '\0' || search[j+1] == NULL) && (subend || !end) ) { 
+    if ((a->buffer[subend] != b->data[j] || subend < a->size ||
+         j + 1 == b->size) &&
+        (subend || !end)) {
       if (subend > end) {
         end = subend;
-        d = length - subd;
-        c = ahead[subend] == '\0' ? '\0' : ahead[subend-1];
+        d = b->size - subd;
+        c = subend == a->size ? 0 : a->buffer[subend - 1];
       }
       subend = 0;
       subd = 0;
