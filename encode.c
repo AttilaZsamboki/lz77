@@ -62,7 +62,7 @@ static void init_encoder(Buffer *b) {
   memset(b->data, 0, LENGTH);
 }
 
-static void encode_file(Ahead *a, FILE *f) {
+void encode_file(Ahead *a, FILE *f) {
   Buffer b;
   init_encoder(&b);
 
