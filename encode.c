@@ -13,15 +13,10 @@ void pop(char *str) {
   }
 }
 
-void save(Token token, FILE *f, int token_num) {
+void save(Token token, FILE *f) {
   long pos_before = ftell(f);
   if (fwrite(&token, sizeof(token), 1, f) != 1) {
     fprintf(stderr, "save: fwrite failed\n");
-  }
-
-  if (token_num >= 95 && token_num <= 102) {
-    fprintf(stderr, "  save token %d at offset %ld: d=%d l=%d next=0x%02x\n",
-            token_num, pos_before, token.distance, token.length, token.next);
   }
 }
 
@@ -55,11 +50,36 @@ void read_file(const char *filename, Ahead *a) {
   fclose(f);
 }
 
-static void init_encoder(Buffer *b) {
+void init_encoder(Buffer *b) {
   b->size = 0;
   b->end = 0;
   b->start = 0;
   memset(b->data, 0, LENGTH);
+}
+
+void free_tokens(TokenNode *head) {
+  while (head) {
+    TokenNode *temp = head;
+    head = head->next;
+    free(temp);
+  }
+}
+
+void append_token(TokenNode **head, TokenNode **tail, Token t) {
+  TokenNode *new_node = (TokenNode *)malloc(sizeof(TokenNode));
+  if(!new_node) {
+    perror("Couldn't allocate memory");
+    exit(1);
+  }
+  new_node->t = t;
+  new_node->next = NULL;
+
+  if (*tail) {
+    (*tail)->next = new_node;
+  } else {
+    *head = new_node;
+  }
+  *tail = new_node;
 }
 
 void encode_file(Ahead *a, FILE *f) {
@@ -67,8 +87,7 @@ void encode_file(Ahead *a, FILE *f) {
   init_encoder(&b);
 
   int idx = 0;
-  size_t output_pos = 0;
-  int token_count = 0;
+  TokenNode *head = NULL, *tail = NULL;
 
   while (idx < a->size) {
     Token token;
@@ -89,11 +108,9 @@ void encode_file(Ahead *a, FILE *f) {
 
       for (int i = 0; i < (int)token.length; i++) {
         add(a->buffer[idx++], &b);
-        output_pos++;
       }
       if (idx < a->size) {
         add(a->buffer[idx++], &b);
-        output_pos++;
       }
     } else {
       token.distance = 0;
@@ -101,14 +118,17 @@ void encode_file(Ahead *a, FILE *f) {
       token.next = (unsigned char)(a->buffer[idx]);
 
       add(a->buffer[idx++], &b);
-      output_pos++;
     }
 
-    save(token, f, token_count);
-    token_count++;
+    append_token(&head, &tail, token);
   }
-  fprintf(stderr, "Encoded %d tokens, output %zu bytes\n", token_count,
-          output_pos);
+
+  TokenNode *current = head;
+  while (current) {
+    save(current->t, f);
+    current = current->next;
+  }
+  free_tokens(head);
 }
 
 int main(int argc, char *argv[]) {
