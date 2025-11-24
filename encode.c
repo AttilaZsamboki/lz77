@@ -6,17 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-void pop(char *str) {
-  size_t len = strlen(str);
-  if (len > 0) {
-    memmove(str, str + 1, len);
-  }
-}
+
 
 void save(Token token, FILE *f) {
   long pos_before = ftell(f);
   if (fwrite(&token, sizeof(token), 1, f) != 1) {
-    fprintf(stderr, "save: fwrite failed\n");
+    fprintf(stderr, "mentes: fwrite sikertelen\n");
   }
 }
 
@@ -26,7 +21,7 @@ void read_file(const char *filename, Ahead *a) {
 
   FILE *f = fopen(filename, "rb");
   if (!f) {
-    perror("read_file: fopen failed");
+    perror("fajl_olvasas: fopen sikertelen");
     return;
   }
 
@@ -36,14 +31,14 @@ void read_file(const char *filename, Ahead *a) {
 
   a->buffer = malloc(a->size + 1);
   if (!a->buffer) {
-    perror("read_file: malloc failed");
+    perror("fajl_olvasas: malloc sikertelen");
     fclose(f);
     return;
   }
 
   size_t bytes_read = fread(a->buffer, 1, a->size, f);
   if (bytes_read != (size_t)a->size) {
-    fprintf(stderr, "read_file: fread incomplete. Expected %ld, got %zu\n",
+    fprintf(stderr, "fajl_olvasas: fread hiba. Vart: %ld, kapott: %zu\n",
             a->size, bytes_read);
   }
 
@@ -68,7 +63,7 @@ void free_tokens(TokenNode *head) {
 void append_token(TokenNode **head, TokenNode **tail, Token t) {
   TokenNode *new_node = (TokenNode *)malloc(sizeof(TokenNode));
   if(!new_node) {
-    perror("Couldn't allocate memory");
+    perror("Nem sikerult memoriat foglalni");
     exit(1);
   }
   new_node->t = t;
@@ -94,7 +89,7 @@ void encode_file(Ahead *a, FILE *f) {
     Ahead lookahead = {a->size - idx, a->buffer + idx};
     Match match = find_match(&b, &lookahead);
 
-    // Ensure we have at least one character left for token.next
+    // Legalább egy karakternek maradnia kell a token.next számára
     if (match.l >= lookahead.size && match.l > 0) {
       match.l = lookahead.size - 1;
     }
@@ -133,8 +128,8 @@ void encode_file(Ahead *a, FILE *f) {
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage:\n");
-    printf("  %s <input> <output>\n", argv[0]);
+    printf("Hasznalat:\n");
+    printf("  %s <bemenet> <kimenet>\n", argv[0]);
     return 1;
   }
 
@@ -143,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   Ahead *a = malloc(sizeof(Ahead));
   if (!a) {
-    perror("malloc failed");
+    perror("malloc sikertelen");
     return 1;
   }
 
@@ -151,14 +146,14 @@ int main(int argc, char *argv[]) {
   read_file(input_path, a);
 
   if (!a->buffer) {
-    fprintf(stderr, "Failed to read input file '%s'\n", input_path);
+    fprintf(stderr, "Nem sikerult beolvasni a bemeneti fajlt: '%s'\n", input_path);
     free(a);
     return 1;
   }
 
   FILE *f = fopen(output_path, "wb");
   if (!f) {
-    perror("File open failed!");
+    perror("Fajl megnyitasa sikertelen!");
     free(a->buffer);
     free(a);
     return 1;

@@ -10,7 +10,7 @@ typedef struct TokenNode {
   struct TokenNode *next;
 } TokenNode;
 
-void pop(char *str);
+
 void encode_file(Ahead *a, FILE *f);
 void save(Token token, FILE *f);
 void read_file(const char *filename, Ahead *a);

@@ -35,7 +35,7 @@ Match find_match(Buffer *b, Ahead *a) {
         if (dist == 0)
           dist = LENGTH;
         d = dist;
-        c = subend == a->size ? 0 : a->buffer[subend]; // Kövi karakter
+        c = subend == a->size ? 0 : a->buffer[subend]; // Következő karakter
       }
 
       subend = 0;

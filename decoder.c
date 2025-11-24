@@ -8,49 +8,68 @@
 unsigned char *read_file(const char *filename, size_t *out_size) {
   FILE *f = fopen(filename, "rb");
   if (!f) {
-    perror("Error opening file");
+    perror("Hiba a fajl megnyitasakor");
     return NULL;
   }
 
-  fseek(f, 0, SEEK_END);
-  long file_size = ftell(f);
-  rewind(f);
-
-  size_t max_output =
-      (file_size < 1000000) ? (file_size * 100 + 4096) : 104857600;
-  unsigned char *data = malloc(max_output);
+  size_t capacity = 4096;
+  size_t size = 0;
+  unsigned char *data = malloc(capacity);
   if (!data) {
     perror("malloc");
     fclose(f);
     return NULL;
   }
+
   Token token;
-  int end = 0;
   while (fread(&token, sizeof(token), 1, f) == 1) {
-    if (token.length == 0 && token.distance == 0) {
-      data[end] = token.next;
-      end++;
-    } else {
-      int start = end - token.distance;
-      for (int i = 0; i < token.length; i++) {
-        data[end] = data[i + start];
-        end++;
+    size_t required_size = size + (token.length > 0 ? token.length + 1 : 1);
+    
+    if (required_size > capacity) {
+      size_t new_capacity = capacity * 2;
+      if (new_capacity < required_size) new_capacity = required_size + 4096;
+      
+      unsigned char *new_data = realloc(data, new_capacity);
+      if (!new_data) {
+        perror("realloc");
+        free(data);
+        fclose(f);
+        return NULL;
       }
-      data[end] = token.next;
-      end++;
+      data = new_data;
+      capacity = new_capacity;
+    }
+
+    if (token.length == 0 && token.distance == 0) {
+      data[size++] = token.next;
+    } else {
+      int start = size - token.distance;
+      // Alapvető ellenőrzés érvénytelen tömörített adatokra
+      if (start < 0) {
+          fprintf(stderr, "Ervenytelen tomoritett adat: a tavolsag tul nagy\n");
+          free(data);
+          fclose(f);
+          return NULL;
+      }
+      
+      for (int i = 0; i < token.length; i++) {
+        data[size++] = data[start + i];
+      }
+      data[size++] = token.next;
     }
   }
+
   fclose(f);
 
   if (out_size)
-    *out_size = end;
+    *out_size = size;
   return data;
 }
 
 int main(int argc, char *argv[]) {
   if (argc != 3) {
-    printf("Usage:\n");
-    printf("  %s <input> <output>\n", argv[0]);
+    printf("Hasznalat:\n");
+    printf("  %s <bemenet> <kimenet>\n", argv[0]);
     return 1;
   }
 
@@ -61,7 +80,7 @@ int main(int argc, char *argv[]) {
 
   FILE *f = fopen(argv[2], "wb");
   if (!f) {
-    perror("Error opening output file");
+    perror("Hiba a kimeneti fajl megnyitasakor");
     free(data);
     return 1;
   }
